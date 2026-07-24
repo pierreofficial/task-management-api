@@ -63,7 +63,20 @@ npm start
 Optional: `npm run seed` loads sample users/projects/tasks  
 (`alice@example.com` / `bob@example.com`, password `password123`).
 
-Useful scripts: `npm test`, `npm run dev`, `npm run migrate`, `npm run seed`.
+Useful commands (Makefile or npm):
+
+```bash
+make test          # npm test
+make migrate       # apply migrations
+make migrate-dev   # create/apply migrations in development
+make dev           # nodemon
+make start         # production-style start
+make seed          # sample data
+make up            # docker compose up --build
+make down          # docker compose down
+make reset         # install + generate + migrate + seed
+make help          # list all targets
+```
 
 ## Authentication
 
