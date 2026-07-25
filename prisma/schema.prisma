@@ -49,7 +49,8 @@ model Project {
 
   tasks       Task[]
 
-  @@unique([ownerId, name])
+  // Active (non-deleted) names are unique per owner via partial unique index
+  // in migration: projects_owner_id_name_active_key WHERE deleted_at IS NULL
   @@index([ownerId])
   @@map("projects")
 }

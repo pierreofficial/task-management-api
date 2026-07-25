@@ -55,5 +55,29 @@ describe('Project lifecycle flow', () => {
       .get(`/api/projects/${projectId}`)
       .set(auth);
     expect(projectCheckRes.status).toBe(404);
+
+    // Soft-deleted name can be reused
+    const recreateRes = await request(app)
+      .post('/api/projects')
+      .set(auth)
+      .send({ name: 'Test Project' });
+    expect(recreateRes.status).toBe(201);
+    expect(recreateRes.body.name).toBe('Test Project');
+    expect(recreateRes.body.id).not.toBe(projectId);
+  });
+
+  test('rejects duplicate active project names for the same user', async () => {
+    const first = await request(app)
+      .post('/api/projects')
+      .set(auth)
+      .send({ name: 'Unique Name' });
+    expect(first.status).toBe(201);
+
+    const second = await request(app)
+      .post('/api/projects')
+      .set(auth)
+      .send({ name: 'Unique Name' });
+    expect(second.status).toBe(400);
+    expect(second.body.error).toBe('Project name already exists');
   });
 });

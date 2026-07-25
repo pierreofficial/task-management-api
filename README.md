@@ -20,7 +20,7 @@ A REST API for managing projects and their tasks, built with Node.js, Express, a
 ### 1. Clone and install dependencies
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/pierreofficial/task-management-api.git
 cd task-management-api
 npm install
 ```
@@ -135,6 +135,15 @@ This runs both unit tests (business logic validation) and integration tests (ful
 
 ## Database Schema
 
+### Design rationale
+
+- **Ownership first:** Projects belong to a `User`; tasks belong to a project. Auth-scoped queries always filter by `ownerId`, so users never see each other’s data.
+- **Soft deletes:** Projects and tasks use `deleted_at` instead of hard deletes. Listing/get endpoints ignore soft-deleted rows. Deleting a project soft-deletes its tasks in the same transaction.
+- **Name uniqueness with soft deletes:** Active project names are unique per owner via a **partial unique index** (`WHERE deleted_at IS NULL`), so a deleted project’s name can be reused.
+- **Indexes for list queries:** Tasks are indexed on `project_id`, `status`, `priority`, and `due_date` so filters and sorts stay efficient.
+- **No N+1 on global task lists:** `GET /api/tasks` loads each task’s project `id`/`name` with a single Prisma `include` (one join), not a query per row.
+- **DB + app validation:** Enums and foreign keys are enforced in Postgres; due dates, empty titles, and invalid enums are also checked in the application layer for clear `400` responses.
+
 ### User
 
 | Field | Type | Notes |
@@ -158,7 +167,7 @@ This runs both unit tests (business logic validation) and integration tests (ful
 | updatedAt | DateTime | Auto-updated on change |
 | deletedAt | DateTime | Soft delete timestamp |
 
-A project has many tasks. **Deleting a project soft-deletes its tasks**. Hard deletes cascade at the DB level when a user is removed.
+A project has many tasks. **Deleting a project soft-deletes its tasks**. Hard deletes cascade at the DB level when a user is removed. Active project names are unique per owner (partial unique index).
 
 ### Task
 
